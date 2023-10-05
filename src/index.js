@@ -25,10 +25,10 @@ app.get("/", (req, res) =>{
 
 const PORT = 5000;
 
-mongoose.connect("mongodb+srv://brst981:brst981@clustertest.9ysb1qa.mongodb.net/")
+mongoose.connect(process.env.DATABASE_URL)
 .then(()=>{
-    app.listen(PORT, ()=>{
-        console.log("Server started on port no. " + PORT);
+    app.listen(process.env.PORT, ()=>{
+        console.log("Server started on port no. " + process.env.PORT);
     });
 })
 .catch((error)=>{
