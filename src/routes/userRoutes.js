@@ -12,3 +12,8 @@ userRouter.get("/getUserList", getAllUser);
 
 
 module.exports = userRouter;
+
+
+// DATABASE_URL="mongodb+srv://brst981:brst981@clustertest.9ysb1qa.mongodb.net/"
+// PORT = 5000
+// BASE_URL = "http://192.168.1.150:5000/users/verify/"
