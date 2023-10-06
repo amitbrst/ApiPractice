@@ -201,3 +201,13 @@ const follow = async (req, res)=>{
 }
 
 module.exports = { signup, signin, verify, getAllUser, getUserDetails,updateProfile,follow };
+
+
+// DATABASE_URL="mongodb+srv://brst981:brst981@clustertest.9ysb1qa.mongodb.net/"
+// PORT = 5000
+// SEND_VERIFICATION_EMAIL = "No" #Yes =>true / No =>False
+// # BASE_URL = "http://192.168.1.150:5000/users/verify/"
+// BASE_URL = "http://192.168.0.220:5000/users/verify/"
+// USER = "amitk.freedom@gmail.com"
+// PASS = "tmlzqzfxpgadbhnz"
+// PROFILEI_IMAGE ="https://w7.pngwing.com/pngs/831/88/png-transparent-user-profile-computer-icons-user-interface-mystique-miscellaneous-user-interface-design-smile-thumbnail.png"
