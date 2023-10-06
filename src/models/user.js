@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   countryCode: { type: String,},
   countryName: { type: String,},
   profilePicture: { type: String },
+  uid: { type: Number },
   joindDate: { type: Date, default: Date.now },
   sentFollowRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   receivedFollowRequests: [
