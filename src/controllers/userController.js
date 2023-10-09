@@ -17,7 +17,12 @@ const signup = async (req, res) => {
     }
 
     const users = await userModel.find();
-    let lastUid = users[users.length - 1].uid;
+    let lastUid = users[users.length - 1]?.uid;
+    // let lastUid = undefined;
+    // if (users && users[users.length - 1]?.uid==undefined) {
+    //   lastUid=undefined
+    // }
+    // else
     if (lastUid != undefined) {
       lastUid++;
     }
@@ -151,63 +156,172 @@ const getUserDetails = async (req, res) => {
   const { userId } = req.body;
   try {
     // Use findOne to retrieve a specific document by _id
-    const user = await userModel.findOne({ _id: userId }, 'username email phone ');
+    const user = await userModel.findOne(
+      { _id: userId },
+      "username email phone "
+    );
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     res.json(user);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-const updateProfile = async (req, res) =>{
+const updateProfile = async (req, res) => {
   // http://localhost:5000/users/updateProfile/651f0a579a001b889290b1ba
   // Put
   const userId = req.params.id;
-  const {username} = req.body;
+  const { username } = req.body;
 
   const newObj = {
-    username : username,
-  }
+    username: username,
+  };
 
   try {
-      await userModel.findByIdAndUpdate({ _id: userId }, newObj, {new : true});
-      res.status(200).json({message:"Profile has been updated",newObj});
-      
+    await userModel.findByIdAndUpdate({ _id: userId }, newObj, { new: true });
+    res.status(200).json({ message: "Profile has been updated", newObj });
   } catch (error) {
-      console.log(error);
-      res.status(500).json({message: "Something went wrong"});
+    console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
   }
+};
 
-}
-
-const follow = async (req, res)=>{
-  const { currentUserId, selectedUserId } = req.body;
-
+const follow = async (req, res) => {
   try {
-    await userModel.findByIdAndUpdate(selectedUserId, {
-      $push: { followers: currentUserId },
+    const { followerId, userId } = req.body;
+    // Check if both users exist
+    const follower = await userModel.findById(followerId); //his id
+    const userToFollow = await userModel.findById(userId); // myId
+
+    if (!follower || !userToFollow) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await userModel.findByIdAndUpdate(follower, {
+      $push: { followers: userToFollow },
     });
 
-    res.sendStatus(200);
+    await userModel.findByIdAndUpdate(userToFollow, {
+      $push: { following: follower },
+    });
+
+    res.status(200).json({ message: "followed successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "error in following a user" });
   }
-}
+};
 
-module.exports = { signup, signin, verify, getAllUser, getUserDetails,updateProfile,follow };
+const unFollow = async (req, res) => {
+  try {
+    const { followerId, userId } = req.body;
+    // Check if both users exist
+    const follower = await userModel.findById(followerId);
+    const userToFollow = await userModel.findById(userId);
+    if (!follower || !userToFollow) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    await userModel.findByIdAndUpdate(follower, {
+      $pull: { followers: userToFollow._id },
+    });
+
+    await userModel.findByIdAndUpdate(userToFollow, {
+      $pull: { following: follower._id },
+    });
+    res.status(200).json({ message: "Unfollowed successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error unfollowing user" + error });
+  }
+};
+
+const followerList = async (req, res) => {
+  const { email } = req.body;
+  try {
+    // const existingUser = await userModel.findOne({ email: email });
+    // if (!existingUser) {
+    //   return res.status(404).json({ message: "User not found" });
+    // }
+    const user = await userModel
+      .findOne({ email: email })
+      .populate("followers"); // Populate the 'followers' field with user data
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ followers: user.followers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const followingList = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await userModel
+      .findOne({ email: email })
+      .populate("following"); // Populate the 'following' field with user data
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ following: user.following });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
 
 
-// DATABASE_URL="mongodb+srv://brst981:brst981@clustertest.9ysb1qa.mongodb.net/"
-// PORT = 5000
-// SEND_VERIFICATION_EMAIL = "No" #Yes =>true / No =>False
-// # BASE_URL = "http://192.168.1.150:5000/users/verify/"
-// BASE_URL = "http://192.168.0.220:5000/users/verify/"
-// USER = "amitk.freedom@gmail.com"
-// PASS = "tmlzqzfxpgadbhnz"
-// PROFILEI_IMAGE ="https://w7.pngwing.com/pngs/831/88/png-transparent-user-profile-computer-icons-user-interface-mystique-miscellaneous-user-interface-design-smile-thumbnail.png"
+
+const checkFriend = async (req, res) => {
+  try {
+    const { followerId, userId } = req.body;
+    // Check if both users exist
+    const follower = await userModel.findById(followerId); //his id
+    const userToFollow = await userModel.findById(userId); // myId
+
+    if (!follower || !userToFollow) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Check if userToFollow also follows the follower
+    userToFollow.following.some(async (id) => {
+      if (id.toString() === followerId) {
+        await userModel.findByIdAndUpdate(follower, {
+          $push: { friends: userToFollow },
+        });
+
+        await userModel.findByIdAndUpdate(userToFollow, {
+          $push: { friends: follower },
+        });
+      }
+      // console.log(id,followerId,"<<<<<<<<");
+    });
+    res.status(200).json({ message: "Now you both are friend" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "no friend" });
+  }
+};
+
+module.exports = {
+  signup,
+  signin,
+  verify,
+  getAllUser,
+  getUserDetails,
+  updateProfile,
+  follow,
+  unFollow,
+  followerList,
+  followingList,
+  checkFriend
+};
